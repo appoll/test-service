@@ -19,6 +19,7 @@ from types import FrameType
 from flask import Flask
 
 from utils.logging import logger
+from google.cloud import pubsub_v1
 
 app = Flask(__name__)
 
@@ -30,7 +31,24 @@ def hello() -> str:
 
     # https://cloud.google.com/run/docs/logging#correlate-logs
     logger.info("Child logger with trace Id.")
+    
+    publisher = pubsub_v1.PublisherClient()
+    staging_project = "ovy-staging"
+    sub_notifications_topic_ios_staging = "sub-notifications-queue-ios-staging"
 
+    topic_path_ios_staging = publisher.topic_path(staging_project, sub_notifications_topic_ios_staging)
+    
+        # Check Pub Sub permissions
+    permissions_to_check = ["pubsub.topics.publish", "pubsub.topics.update"]
+    allowed_permissions = publisher.test_iam_permissions(
+        request={"resource": topic_path_ios_staging, "permissions": permissions_to_check}
+    )
+
+    print(
+        "Allowed permissions for topic {}: {}".format(topic_path_ios_staging, allowed_permissions)
+    )
+
+    
     return "Hello, World!"
 
 
